@@ -1,4 +1,4 @@
-# Pose Estimation Fall Detector
+# Posture Detector
 Replace this text with a brief description (2-3 sentences) of your project. This description should draw the reader in and make them interested in what you've built. You can include what the biggest challenges, takeaways, and triumphs from completing the project were. As you complete your portfolio, remember your audience is less familiar than you are with all that your project entails!
 
 You should comment out all portions of your portfolio that you have not completed yet, as well as any instructions:
@@ -47,11 +47,20 @@ For your second milestone, explain what you've worked on since your previous mil
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/CaCazFBhYKs" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
-For your first milestone, describe what your project is and how you plan to build it. You can include:
-- An explanation about the different components of your project and how they will all integrate together
-- Technical progress you've made so far
-- Challenges you're facing and solving in your future milestones
-- What your plan is to complete your project
+The core functionality of my project is pose estimation. While my milestone video describes its application as fall detection, I have since modified it to be a pose detector to prevent strain and headaches.
+
+My first milestone for this project consisted of two main components: setting up the hardware and making sure the camera worked properly.
+
+For the first part, the physical setup began by flashing the Raspberry Pi OS onto a microSD card. After flashing the OS onto the pi, my goal was to run it 'headless,' meaning without a monitor, keyboard, or mouse attached to the Pi itself. To achieve this, I set up RealVNC viewer so I could view the Pi's desktop remotely, and I configured SSH to securely access the command line terminal from my main computer.
+
+During this setup stage, I had many challenges, particularly with the VNC connection. Initially, my connection kept timing out entirely. I had to troubleshoot by using the command sudo raspi-config to manually turn the remote desktop interface permissions on. After I solved that, there was another challenge: the VNC screen was completely blank and gray. Because the Pi didn't detect a physical monitor plugged into its HDMI port, it refused to draw a desktop. I fixed this by going back into the configuration settings and forcing a specific display resolution.
+
+For the second part of my milestone, I set up the camera module. I connected it to the raspberry pi and I started with simple terminal tests using the rpicam-still command. From there, I used Picamera2 – a python library specifically designed for the pi camera module – to take videos.
+
+The main challenge during this stage was that after setting up the camera, my SSH access stopped working entirely. After a bit of confusion, I realized that while I was trying to fix my camera permissions, I had accidentally disabled SSH. Because I was completely locked out, I had to connect the Pi directly to a monitor, plug in a temporary keyboard, and manually re-enable SSH. 
+
+After completing this set-up, the goal for the next milestone is to get the pose estimation model to output coordinates for 17 points on the body.
+
 
 # Schematics 
 Here's where you'll put images of your schematics. [Tinkercad](https://www.tinkercad.com/blog/official-guide-to-tinkercad-circuits) and [Fritzing](https://fritzing.org/learning/) are both great resoruces to create professional schematic diagrams, though BSE recommends Tinkercad becuase it can be done easily and for free in the browser. 
