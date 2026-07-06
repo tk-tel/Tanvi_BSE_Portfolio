@@ -45,7 +45,8 @@ For your second milestone, explain what you've worked on since your previous mil
 
 **Don't forget to replace the text below with the embedding for your milestone video. Go to Youtube, click Share -> Embed, and copy and paste the code to replace what's below.**
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/CaCazFBhYKs" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+https://youtube.com/embed/bkzAmk7Hbp8 
+
 
 The core functionality of my project is pose estimation. While my milestone video describes its application as fall detection, I have since modified it to be a pose detector to prevent strain and headaches.
 
