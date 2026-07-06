@@ -44,7 +44,7 @@ For your second milestone, explain what you've worked on since your previous mil
 # First Milestone
 
 
-https://youtube.com/embed/bkzAmk7Hbp8? 
+https://youtube.com/embed/bkzAmk7Hbp8?si=oeXuL9OIP1jd7Hu8
 
 
 The core functionality of my project is pose estimation. While my milestone video describes its application as fall detection, I have since modified it to be a pose detector to prevent strain and headaches.
