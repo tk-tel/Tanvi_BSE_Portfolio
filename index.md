@@ -21,11 +21,21 @@ You should comment out all portions of your portfolio that you have not complete
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/F7M7imOVGug" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
-For your final milestone, explain the outcome of your project. Key details to include are:
-- What you've accomplished since your previous milestone
-- What your biggest challenges and triumphs were at BSE
-- A summary of key topics you learned about
-- What you hope to learn in the future after everything you've learned at BSE
+For my third milestone, I added modifications to my code and I added circuit components. 
+
+In my original code, it would output bad posture even if my posture was perfect but I was looking down. I tried finding a way to calculate posture that wasn’t determined by head coordinates but since the head is a huge part of posture, I ultimately decided to add another “mode” to my code. I called this papermode for tasks done on paper and not on the computer. The user enters this mode when they have a specific nose to shoulder angle and while in this mode, the threshold for bad posture is different.
+
+Another problem I had with the original code is that every time I tested it, the threshold would be different. I realized that even though I was calculating the angle instead of distance, due to posenet outputting 2D coordinates instead of 3D, it would change based on the position of the camera. So, I added calibration to my code. Right after turning on the device, it asks for an example of good and bad posture and calculates a threshold in between. 
+
+The second half of my modifications was adding circuit components, specifically an LED and buzzer. I started with just turning on a red LED but switched to an RGB LED because I wanted to differentiate between all the possible postures. I also added a passive buzzer, but the GPIO pins weren’t supplying enough current so I added a transistor to safely increase the amount of current supplied.
+
+After finishing all the code and wiring, the main issue that remained was that the detection was jittery and the LED was flickering between colors. I realized that it was because it was outputting every instance of bad posture even if it was just a glitch, so I added a moving average to make sure it ignored random extreme values.
+
+My project still needs some edits to improve accuracy but overall, it is complete. Through this project, I learned how to set-up and code on a raspberry pi, how to use a ML model to process images from a live camera feed, how to wire circuit components, and most importantly, how to troubleshoot and persevere. 
+
+For further steps, I plan on 3D printing a case to hold the camera in place and designing a custom PCB so I can make it a proper device that I can use in my daily life. I also aim to make more projects that build on what I have learned.
+
+
 
 
 
