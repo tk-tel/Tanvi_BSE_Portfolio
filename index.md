@@ -31,15 +31,20 @@ For your final milestone, explain the outcome of your project. Key details to in
 
 # Second Milestone
 
-**Don't forget to replace the text below with the embedding for your milestone video. Go to Youtube, click Share -> Embed, and copy and paste the code to replace what's below.**
+<iframe width="560" height="315" src="https://www.youtube.com/embed/uOBhi_VRXXk?si=AUENxLJLNYaVc7p8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/y3VAmNlER5Y" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+My second milestone includes finishing my base project, which is pose estimation, and adding the functionality for a specific use case, which is posture detection. Even though I was originally planning on using pose estimation to do fall detection, I pivoted to posture detection. This is because I wouldn’t really have been able to implement fall detection in any useful way with what I had. The camera was too narrow, the fps too low for me, and actual fall detection devices have many more computationally heavy features to maximize safety. Given the resources I had, I decided to do posture detection instead, which is a problem I personally have and can realistically fix with my current prototype.
 
-For your second milestone, explain what you've worked on since your previous milestone. You can highlight:
-- Technical details of what you've accomplished and how they contribute to the final goal
-- What has been surprising about the project so far
-- Previous challenges you faced that you overcame
-- What needs to be completed before your final milestone 
+Pose estimation:
+Pose estimation models use a Convolutional Neural Network (CNN) to process input images and output the coordinates of keypoints corresponding to various body parts. Originally, I tried using mediapipe instead of posenet for the model because it is more accurate, has better performance, and is easier to implement. However, there were many errors, such as picamera2 not working, opencv not working, and more. I realized that mediapipe was not compatible with python v3.13 so I tried to install an older version manually but the code didn’t work with all the packages having different versions. I switched to posenet which is part of tensorflow and works with the latest version of python. Posenet uses a CNN to output a heatmap and an offset map, which coordinates must then be calculated from to do pose estimation.
+
+Posture detection:
+At first, I calculated bad posture based on the distance between two coordinates but this wasn’t accurate because it would change if I moved closer or further from the camera. I decided to fix this by calculating the angle between the ear and shoulder instead. I printed the angle to the terminal and sat in different postures to find a threshold value I could use to detect bad posture. If the angle exceeds that, it prints bad posture to the terminal.
+
+I also tried other methods of calculating bad posture, like the ratio of the neck to shoulder distance to shoulder to shoulder distance, but ultimately the first way worked the best.
+
+Now that the base project is done, I plan on incorporating LEDs and a buzzer warning to visually and audibly alert the user if they have bad posture.
+ 
 
 # First Milestone
 
