@@ -67,7 +67,9 @@ After completing this set-up, the goal for the next milestone is to get the pose
 
 
 # Schematics 
-Here's where you'll put images of your schematics. [Tinkercad](https://www.tinkercad.com/blog/official-guide-to-tinkercad-circuits) and [Fritzing](https://fritzing.org/learning/) are both great resoruces to create professional schematic diagrams, though BSE recommends Tinkercad becuase it can be done easily and for free in the browser. 
+
+<img width="637" height="372" alt="Screenshot 2026-07-14 101842" src="https://github.com/user-attachments/assets/f35a6830-87cd-4d56-a191-5c8feece4b38" />
+
 
 # Code
 Here's where you'll put your code. The syntax below places it into a block of code. Follow the guide [here]([url](https://www.markdownguide.org/extended-syntax/)) to learn how to customize it to your project needs. 
