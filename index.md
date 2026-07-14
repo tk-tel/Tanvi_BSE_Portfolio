@@ -33,6 +33,7 @@ For your final milestone, explain the outcome of your project. Key details to in
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/uOBhi_VRXXk?si=AUENxLJLNYaVc7p8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
+
 My second milestone includes finishing my base project, which is pose estimation, and adding the functionality for a specific use case, which is posture detection. Even though I was originally planning on using pose estimation to do fall detection, I pivoted to posture detection. This is because I wouldn’t really have been able to implement fall detection in any useful way with what I had. The camera was too narrow, the fps too low for me, and actual fall detection devices have many more computationally heavy features to maximize safety. Given the resources I had, I decided to do posture detection instead, which is a problem I personally have and can realistically fix with my current prototype.
 
 Pose estimation:
