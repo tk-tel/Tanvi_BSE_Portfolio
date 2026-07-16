@@ -1,11 +1,7 @@
 # Posture Detector
-Replace this text with a brief description (2-3 sentences) of your project. This description should draw the reader in and make them interested in what you've built. You can include what the biggest challenges, takeaways, and triumphs from completing the project were. As you complete your portfolio, remember your audience is less familiar than you are with all that your project entails!
 
-You should comment out all portions of your portfolio that you have not completed yet, as well as any instructions:
-```HTML 
-<!--- This is an HTML comment in Markdown -->
-<!--- Anything between these symbols will not render on the published site -->
-```
+Bad posture is something that a lot of people struggle with, especially as we spend more and more time on our computers and phones. To tackle this issue and fix my own bad posture, I designed a posture detector that runs on a raspberry pi and processes a live camera feed to detect if the user has bad posture. An LED visually shows posture status and a buzzer goes off when the user needs to fix their posture. I faced many challenges in set-up, getting the code to work, and integrating circuit components, but I am very proud of the final product. I plan to add more features to make this a device I can use in my daily life.
+
 
 | **Engineer** | **School** | **Area of Interest** | **Grade** |
 |:--:|:--:|:--:|:--:|
@@ -17,9 +13,7 @@ You should comment out all portions of your portfolio that you have not complete
   
 # Final Milestone
 
-**Don't forget to replace the text below with the embedding for your milestone video. Go to Youtube, click Share -> Embed, and copy and paste the code to replace what's below.**
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/F7M7imOVGug" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/d8hTNZIYgD8?si=CP_50_oF4deXSfz9" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 For my third milestone, I added modifications to my code and I added circuit components. 
 
@@ -84,17 +78,401 @@ After completing this set-up, the goal for the next milestone is to get the pose
 # Code
 Here's where you'll put your code. The syntax below places it into a block of code. Follow the guide [here]([url](https://www.markdownguide.org/extended-syntax/)) to learn how to customize it to your project needs. 
 
-```c++
-void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(9600);
-  Serial.println("Hello World!");
+```python
+import os
+import cv2
+import numpy as np
+import math
+import tensorflow as tf
+import time
+from threading import Thread, Lock
+from picamera2 import Picamera2
+import RPi.GPIO as GPIO
+
+class VideoStream:
+    def __init__(self, resolution=(640, 480)):
+        self.stream = Picamera2()
+        config = self.stream.create_video_configuration(
+            main={"format": "BGR888", "size": resolution}
+        )
+        self.stream.configure(config)
+        self.stream.start()
+        print("Pi Camera (libcamera/picamera2) initiated successfully.")
+
+        self.frame = self.stream.capture_array()
+        self.grabbed = self.frame is not None
+
+        self.stopped = False
+
+    def start(self):
+        Thread(target=self.update, args=()).start()
+        return self
+
+    def update(self):
+        while True:
+            if self.stopped:
+                self.stream.stop()
+                return
+            self.frame = self.stream.capture_array()
+            self.grabbed = True
+
+    def read(self):
+        return self.frame
+
+    def stop(self):
+        self.stopped = True
+
+
+MODEL_PATH = "posenet_mobilenet_v1_100_257x257_multi_kpt_stripped.tflite"
+min_conf_threshold = 0.5
+imW, imH = 1280, 720
+output_stride = 32
+
+PART_INDEX = {
+    "nose": 0, "leftEye": 1, "rightEye": 2, "leftEar": 3, "rightEar": 4,
+    "leftShoulder": 5, "rightShoulder": 6, "leftElbow": 7, "rightElbow": 8,
+    "leftWrist": 9, "rightWrist": 10, "leftHip": 11, "rightHip": 12,
+    "leftKnee": 13, "rightKnee": 14, "leftAnkle": 15, "rightAnkle": 16,
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
+interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
+interpreter.allocate_tensors()
 
-}
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+height = input_details[0]['shape'][1]
+width = input_details[0]['shape'][2]
+
+floating_model = (input_details[0]['dtype'] == np.float32)
+input_mean = 127.5
+input_std = 127.5
+
+def mod(a, b):
+    floored = np.floor_divide(a, b)
+    return np.subtract(a, np.multiply(floored, b))
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+def sigmoid_and_argmax2d(threshold):
+    v1 = interpreter.get_tensor(output_details[0]['index'])[0]
+    h_shape, w_shape, depth = v1.shape
+    reshaped = np.reshape(v1, [h_shape * w_shape, depth])
+    reshaped = sigmoid(reshaped)
+    reshaped = (reshaped > threshold) * reshaped
+    coords = np.argmax(reshaped, axis=0)
+    yCoords = np.round(np.expand_dims(np.divide(coords, w_shape), 1))
+    xCoords = np.expand_dims(mod(coords, w_shape), 1)
+    return np.concatenate([yCoords, xCoords], 1)
+
+def get_offset_point(y, x, offsets, keypoint, num_key_points):
+    y_off = offsets[y, x, keypoint]
+    x_off = offsets[y, x, keypoint + num_key_points]
+    return np.array([y_off, x_off])
+
+def get_offsets(coords, num_key_points=17):
+    offsets = interpreter.get_tensor(output_details[1]['index'])[0]
+    offset_vectors = np.array([]).reshape(-1, 2)
+    for i in range(len(coords)):
+        heatmap_y = int(coords[i][0])
+        heatmap_x = int(coords[i][1])
+        if heatmap_y > 8: heatmap_y = heatmap_y - 1
+        if heatmap_x > 8: heatmap_x = heatmap_x - 1
+        offset_vectors = np.vstack((offset_vectors, get_offset_point(heatmap_y, heatmap_x, offsets, i, num_key_points)))
+    return offset_vectors
+
+def get_part_yx(keypoint_positions, drop_pts, part_name):
+    idx = PART_INDEX[part_name]
+    if idx in drop_pts:
+        return None, None
+    return keypoint_positions[idx][0], keypoint_positions[idx][1]
+
+def get_angle(x1, y1, x2, y2):
+    delta_x = abs(x1 - x2)
+    delta_y = abs(y1 - y2)
+    angle_rad = math.atan2(delta_x, delta_y)
+    angle_deg = math.degrees(angle_rad)
+    return angle_deg
+
+videostream = None
+
+GPIO.setmode(GPIO.BCM)
+redpin = 12
+greenpin = 19
+bluepin = 13
+GPIO.setup(redpin, GPIO.OUT)
+GPIO.setup(greenpin, GPIO.OUT)
+GPIO.setup(bluepin, GPIO.OUT)
+
+buzzerpin = 17
+frequency = 261.63
+GPIO.setup(buzzerpin, GPIO.OUT)
+pwm = GPIO.PWM(buzzerpin, frequency) 
+
+def alert():  
+    pwm.start(10)
+
+def stop_alert():
+    pwm.stop()
+
+buzzer_on = False
+
+def start_buzzer():
+    global buzzer_on
+    if not buzzer_on:
+        alert()
+        buzzer_on = True
+
+def stop_buzzer():
+    global buzzer_on
+    if buzzer_on:
+        stop_alert()
+        buzzer_on = False
+
+def off():
+    GPIO.output(redpin, GPIO.LOW)
+    GPIO.output(greenpin,GPIO.LOW)
+    GPIO.output(bluepin,GPIO.LOW)
+
+def green():
+    GPIO.output(redpin, GPIO.LOW)
+    GPIO.output(greenpin,GPIO.HIGH)
+    GPIO.output(bluepin,GPIO.LOW)
+    stop_buzzer()
+
+def red():
+    GPIO.output(redpin, GPIO.HIGH)
+    GPIO.output(greenpin,GPIO.LOW)
+    GPIO.output(bluepin,GPIO.LOW)
+    start_buzzer()
+
+def yellow():
+    GPIO.output(redpin, GPIO.HIGH)
+    GPIO.output(greenpin,GPIO.HIGH)
+    GPIO.output(bluepin,GPIO.LOW)
+
+def blue():
+    GPIO.output(redpin, GPIO.LOW)
+    GPIO.output(greenpin,GPIO.LOW)
+    GPIO.output(bluepin,GPIO.HIGH)
+    stop_buzzer()
+
+def purple():
+    GPIO.output(redpin, GPIO.HIGH)
+    GPIO.output(greenpin, GPIO.LOW)
+    GPIO.output(bluepin, GPIO.HIGH)
+
+def blink(color):
+    for _ in range(3):
+        color()
+        time.sleep(0.5)
+        off()
+        time.sleep(0.5)
+
+def get_angle_samples(get_angle_fn):
+    samples = []
+    start = time.time()
+    while time.time() - start < 3:
+        angle = get_angle_fn()
+        if angle is not None:
+            samples.append(angle)
+        time.sleep(0.05)
+    return sum(samples) / len(samples) if samples else None
+
+def get_keypoints_droppts():
+    frame1 = videostream.read()
+
+    if frame1 is None:
+        time.sleep(0.01)
+        return None, []
+
+    frame = frame1.copy()
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    frame_resized = cv2.resize(frame_rgb, (width, height))
+    input_data = np.expand_dims(frame_resized, axis=0)
+
+    if floating_model:
+        input_data = (np.float32(input_data) - input_mean) / input_std
+
+    interpreter.set_tensor(input_details[0]['index'], input_data)
+    interpreter.invoke()
+
+    coords = sigmoid_and_argmax2d(min_conf_threshold)
+    drop_pts = list(np.unique(np.where(coords == 0)[0]))
+    offset_vectors = get_offsets(coords)
+    keypoint_positions = coords * output_stride + offset_vectors
+    return keypoint_positions, drop_pts
+
+def get_current_normal_angle():
+    result = get_keypoints_droppts()
+    if result[0] is None:
+        return None
+    keypoint_positions, drop_pts = result
+    ey, ex = get_part_yx(keypoint_positions, drop_pts, "leftEar")
+    sy, sx = get_part_yx(keypoint_positions, drop_pts, "leftShoulder")
+    if ex is None or sx is None:
+        return None
+    return get_angle(ex, ey, sx, sy)
+
+def run_calibration():
+    print("=== Calibration starting ===")
+
+    blink(green)
+    print("Hold GOOD posture...")
+    good_normal = get_angle_samples(get_current_normal_angle)
+    if good_normal is None: good_normal = 20.0
+    print(f"Good posture angle: {good_normal:.1f}")
+
+    blink(yellow)
+    print("Hold BAD posture...")
+    bad_normal = get_angle_samples(get_current_normal_angle)
+    if bad_normal is None: bad_normal = 25.0
+    print(f"Bad posture angle: {bad_normal:.1f}")
+
+    blink(blue)
+    print("Hold GOOD paper-mode posture...")
+    good_paper = get_angle_samples(get_current_normal_angle)
+    if good_paper is None: good_paper = 30.0
+    print(f"Good paper angle: {good_paper:.1f}")
+
+    blink(purple)
+    print("Hold BAD paper-mode posture...")
+    bad_paper = get_angle_samples(get_current_normal_angle)
+    if bad_paper is None: bad_paper = 40.0
+    print(f"Bad paper angle: {bad_paper:.1f}")
+
+    posture_threshold = (good_normal + bad_normal) / 2
+    paper_threshold = (good_paper + bad_paper) / 2
+
+    print(f"=== Calibration done. Thresholds: normal={posture_threshold:.1f}, paper={paper_threshold:.1f} ===")
+    return posture_threshold, paper_threshold
+
+def process_loop(posture_threshold, paper_threshold):
+    global output_frame
+   
+    recent_angles = []
+    recent_paper_angles = []
+    MOVING_AVERAGE_WINDOW = 5
+    recent_head_angles = []
+    HEAD_MOVING_AVERAGE_WINDOW = 5
+
+    normal_slouch_start_time = None
+    paper_slouch_start_time = None
+    POSTURE_TIME_THRESHOLD = 5
+    
+    POSTURE_ANGLE_THRESHOLD = posture_threshold 
+    PAPER_ANGLE_THRESHOLD = paper_threshold 
+    BEND_THRESHOLD = 65
+    papermode = False
+    off()   
+    
+    while True:
+        frame1 = videostream.read()
+
+        if frame1 is None:
+            time.sleep(0.01)
+            continue
+
+        frame = frame1.copy()
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame_resized = cv2.resize(frame_rgb, (width, height))
+        input_data = np.expand_dims(frame_resized, axis=0)
+
+        if floating_model:
+            input_data = (np.float32(input_data) - input_mean) / input_std
+
+        interpreter.set_tensor(input_details[0]['index'], input_data)
+        interpreter.invoke()
+
+        coords = sigmoid_and_argmax2d(min_conf_threshold)
+        drop_pts = list(np.unique(np.where(coords == 0)[0]))
+        offset_vectors = get_offsets(coords)
+        keypoint_positions = coords * output_stride + offset_vectors
+
+        eary, earx = get_part_yx(keypoint_positions, drop_pts, "leftEar")
+        shouldery, shoulderx = get_part_yx(keypoint_positions, drop_pts, "leftShoulder")
+        nosey, nosex = get_part_yx(keypoint_positions, drop_pts, "nose")
+
+        if nosex is not None and nosey is not None and earx is not None and eary is not None:
+            head_angle = get_angle(nosex, nosey, earx, eary)
+            recent_head_angles.append(head_angle)
+            if len(recent_head_angles) > HEAD_MOVING_AVERAGE_WINDOW:
+                recent_head_angles.pop(0)
+            smoothed_head_angle = sum(recent_head_angles) / len(recent_head_angles)
+            newpapermode = smoothed_head_angle <= BEND_THRESHOLD
+            if newpapermode is not papermode:
+                normal_slouch_start_time = None
+                paper_slouch_start_time = None
+                recent_angles.clear()
+                recent_paper_angles.clear()
+            papermode = newpapermode
+    
+        if earx is not None and shoulderx is not None and eary is not None and shouldery is not None and papermode is False:
+            angle = get_angle(earx,eary,shoulderx,shouldery)
+        
+            recent_angles.append(angle)
+
+            if len(recent_angles) > MOVING_AVERAGE_WINDOW:
+                recent_angles.pop(0)
+
+            smoothed_angle = sum(recent_angles) / len(recent_angles)
+
+            if smoothed_angle > POSTURE_ANGLE_THRESHOLD:
+                if normal_slouch_start_time is None:
+                    normal_slouch_start_time = time.time()
+                else:
+                    elapsed_slouch_time = time.time() - normal_slouch_start_time
+                    yellow()
+                    if elapsed_slouch_time >= POSTURE_TIME_THRESHOLD:
+                        red()
+            else:
+                if normal_slouch_start_time is not None:
+                    normal_slouch_start_time = None
+                green()
+        
+        elif earx is not None and shoulderx is not None and eary is not None and shouldery is not None and papermode is True: 
+            if normal_slouch_start_time is not None:
+                normal_slouch_start_time = None
+            paper_angle = get_angle(earx,eary,shoulderx,shouldery)
+            recent_paper_angles.append(paper_angle)
+
+            if len(recent_paper_angles) > MOVING_AVERAGE_WINDOW:
+                recent_paper_angles.pop(0)
+
+            smoothed_angle = sum(recent_paper_angles) / len(recent_paper_angles)
+
+            if smoothed_angle > PAPER_ANGLE_THRESHOLD:
+                if paper_slouch_start_time is None:
+                    paper_slouch_start_time = time.time()
+                else:
+                    elapsed_slouch_time = time.time() - paper_slouch_start_time
+                    purple()
+                    if elapsed_slouch_time >= POSTURE_TIME_THRESHOLD:
+                        red()
+            else:
+                if paper_slouch_start_time is not None:
+                    paper_slouch_start_time = None
+                blue()    
+
+if __name__ == "__main__":
+    videostream = VideoStream(resolution=(imW, imH)).start()
+    time.sleep(2.0)
+    
+    calibrated_posture, calibrated_paper = run_calibration()
+    
+    print("Posture monitoring system active. Press Ctrl+C to stop.")
+    
+    try:
+        process_loop(calibrated_posture, calibrated_paper)
+        
+    except KeyboardInterrupt:
+        print('\nInterrupted via terminal.')
+        
+    finally:
+        if videostream is not None:
+            videostream.stop()
+        GPIO.cleanup()
+        print('Resources safely terminated.')
 ```
 
 # Bill of Materials 
