@@ -484,4 +484,5 @@ if __name__ == "__main__":
 
 # Sources
 
-- https://medium.com/analytics-vidhya/pose-estimation-on-the-raspberry-pi-4-83a02164eb8e 
+- https://medium.com/analytics-vidhya/pose-estimation-on-the-raspberry-pi-4-83a02164eb8e
+- https://www.instructables.com/Raspberry-Pi-Tutorial-How-to-Use-a-RGB-LED/ 
