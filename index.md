@@ -8,9 +8,7 @@ Bad posture is something that a lot of people struggle with, especially as we sp
 |:--:|:--:|:--:|:--:|
 | Tanvi T | Millburn High School | Electrical Engineering | Incoming Senior
 
-**Replace the BlueStamp logo below with an image of yourself and your completed project. Follow the guide [here](https://tomcam.github.io/least-github-pages/adding-images-github-pages-site.html) if you need help.**
-
-![Headstone Image]<img width="3055" height="2796" alt="IMG_2860" src="https://github.com/user-attachments/assets/50827f45-5f06-47ff-bab6-75e9c198e95a" />
+<img width="3055" height="2796" alt="IMG_2860" src="https://github.com/user-attachments/assets/50827f45-5f06-47ff-bab6-75e9c198e95a" />
   
 # Final Milestone
 
