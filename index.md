@@ -1,3 +1,4 @@
+
 # Posture Detector
 
 Bad posture is something that a lot of people struggle with, especially as we spend more and more time on our computers and phones. To tackle this issue and fix my own bad posture, I designed a posture detector that runs on a raspberry pi and processes a live camera feed to detect if the user has bad posture. An LED visually shows posture status and a buzzer goes off when the user needs to fix their posture. I faced many challenges in set-up, getting the code to work, and integrating circuit components, but I am very proud of the final product. I plan to add more features to make this a device I can use in my daily life.
@@ -9,7 +10,7 @@ Bad posture is something that a lot of people struggle with, especially as we sp
 
 **Replace the BlueStamp logo below with an image of yourself and your completed project. Follow the guide [here](https://tomcam.github.io/least-github-pages/adding-images-github-pages-site.html) if you need help.**
 
-![Headstone Image](logo.svg)
+![Headstone Image]<img width="3055" height="2796" alt="IMG_2860" src="https://github.com/user-attachments/assets/50827f45-5f06-47ff-bab6-75e9c198e95a" />
   
 # Final Milestone
 
