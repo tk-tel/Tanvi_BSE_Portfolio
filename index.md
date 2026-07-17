@@ -8,7 +8,7 @@ Bad posture is something that a lot of people struggle with, especially as we sp
 |:--:|:--:|:--:|:--:|
 | Tanvi T | Millburn High School | Electrical Engineering | Incoming Senior
 
-<img width="3055" height="2796" alt="IMG_2860" src="https://github.com/user-attachments/assets/50827f45-5f06-47ff-bab6-75e9c198e95a" />
+<img width="70%" alt="IMG_2860" src="https://github.com/user-attachments/assets/50827f45-5f06-47ff-bab6-75e9c198e95a" />
   
 # Final Milestone
 
